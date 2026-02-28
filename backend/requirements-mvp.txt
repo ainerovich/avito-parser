@@ -1,0 +1,19 @@
+# MVP Dependencies (минимальный набор)
+
+# Database
+sqlalchemy==2.0.25
+# Web
+requests==2.31.0
+beautifulsoup4==4.12.3
+lxml==5.1.0
+
+# VK API
+vk-api==11.9.9
+
+# Utils
+pyyaml==6.0.1
+loguru==0.7.2
+
+# Опционально (для будущих расширений):
+# playwright==1.41.0  # Для JS-рендеринга (если нужно)
+# pillow==10.2.0      # Обработка изображений

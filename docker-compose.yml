@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  avito-parser:
+    build: .
+    container_name: avito-parser-mvp
+    restart: unless-stopped
+    volumes:
+      - ./backend/config.yaml:/app/config.yaml
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - TZ=Europe/Moscow
+    # Без портов - работает в фоне
+    # Порты можно добавить позже для API
