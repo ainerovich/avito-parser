@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Авито Парсер - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 0;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .card h2 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        input[type="text"],
+        input[type="password"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        textarea {
+            min-height: 100px;
+            font-family: monospace;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .sources-list {
+            margin-top: 15px;
+        }
+        
+        .source-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .source-item.disabled {
+            opacity: 0.5;
+        }
+        
+        .source-url {
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #667eea;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 30px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #667eea;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(30px);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            margin-top: 5px;
+            color: #666;
+        }
+        
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .hint {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .group-input {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🔍 Авито Парсер Dashboard</h1>
+            <p class="subtitle">Настройка и управление парсером объявлений</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="alert" style="display: none;"></div>
+
+        <!-- Статистика -->
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="stat-total">0</div>
+                <div class="stat-label">Всего объявлений</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-new">0</div>
+                <div class="stat-label">Новые</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-published">0</div>
+                <div class="stat-label">Опубликовано</div>
+            </div>
+        </div>
+
+        <!-- 1. Город -->
+        <div class="card">
+            <h2>1️⃣ Город для парсинга</h2>
+            <div class="form-group">
+                <label for="city">Введи город (на латинице, как в URL Авито)</label>
+                <input type="text" id="city" placeholder="vorkuta">
+                <div class="hint">Примеры: vorkuta, moskva, sankt-peterburg, ekaterinburg</div>
+            </div>
+            <button onclick="updateCity()">Сгенерировать ссылки</button>
+        </div>
+
+        <!-- 2. Ссылки -->
+        <div class="card">
+            <h2>2️⃣ Ссылки для парсинга</h2>
+            <p>После выбора города здесь появятся ссылки. Включи/отключи нужные категории.</p>
+            <div id="sources-list" class="sources-list"></div>
+            <button onclick="saveSources()" style="margin-top: 15px;">Сохранить ссылки</button>
+        </div>
+
+        <!-- 3. VK -->
+        <div class="card">
+            <h2>3️⃣ VK настройки</h2>
+            <div class="form-group">
+                <label for="vk-token">VK Access Token</label>
+                <input type="password" id="vk-token" placeholder="vk1.a.xxxxxx...">
+                <div class="hint">Получить: <a href="https://vkhost.github.io/" target="_blank">vkhost.github.io</a> (права: wall, photos, groups, offline)</div>
+            </div>
+            
+            <label>Группы VK (ID группы с минусом!)</label>
+            <div class="group-input">
+                <input type="text" placeholder="Категория" value="auto" readonly>
+                <input type="text" id="vk-group-auto" placeholder="-123456789">
+            </div>
+            <div class="group-input">
+                <input type="text" placeholder="Категория" value="real_estate_sale" readonly>
+                <input type="text" id="vk-group-realestate" placeholder="-987654321">
+            </div>
+            <div class="group-input">
+                <input type="text" placeholder="Категория" value="general (общая)" readonly>
+                <input type="text" id="vk-group-general" placeholder="-111222333">
+            </div>
+            
+            <button onclick="saveVK()">Сохранить VK</button>
+        </div>
+
+        <!-- 4. Telegram -->
+        <div class="card">
+            <h2>4️⃣ Telegram настройки (опционально)</h2>
+            <div class="form-group">
+                <label for="tg-token">Telegram Bot Token</label>
+                <input type="password" id="tg-token" placeholder="123456:ABC-DEF...">
+                <div class="hint">Получить у @BotFather</div>
+            </div>
+            
+            <label>Каналы Telegram (ID канала или @username)</label>
+            <div class="group-input">
+                <input type="text" placeholder="Категория" value="auto" readonly>
+                <input type="text" id="tg-channel-auto" placeholder="@avto_vorkuta">
+            </div>
+            <div class="group-input">
+                <input type="text" placeholder="Категория" value="real_estate_sale" readonly>
+                <input type="text" id="tg-channel-realestate" placeholder="@nedvizhimost_vorkuta">
+            </div>
+            
+            <button onclick="saveTelegram()">Сохранить Telegram</button>
+        </div>
+
+        <!-- 5. Прокси -->
+        <div class="card">
+            <h2>5️⃣ Прокси (опционально)</h2>
+            <div class="form-group">
+                <label for="proxies">Прокси (по одному на строку)</label>
+                <textarea id="proxies" placeholder="http://user:pass@ip:port&#10;http://ip:port&#10;socks5://ip:port"></textarea>
+                <div class="hint">Форматы: http://ip:port, http://user:pass@ip:port, socks5://ip:port</div>
+            </div>
+            <button onclick="saveProxies()">Сохранить прокси</button>
+        </div>
+
+        <!-- 6. Стоп-слова -->
+        <div class="card">
+            <h2>6️⃣ Стоп-слова (фильтр рекламы)</h2>
+            <div class="form-group">
+                <label for="stop-words">Стоп-слова (по одному на строку)</label>
+                <textarea id="stop-words"></textarea>
+                <div class="hint">Объявления с этими словами будут пропущены</div>
+            </div>
+            <button onclick="saveStopWords()">Сохранить стоп-слова</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+        let config = {};
+
+        // Загрузка конфига при старте
+        async function loadConfig() {
+            try {
+                const res = await fetch(`${API_URL}/config`);
+                config = await res.json();
+                
+                // Заполняем поля
+                document.getElementById('city').value = config.city || '';
+                document.getElementById('vk-token').value = config.vk?.access_token || '';
+                document.getElementById('vk-group-auto').value = config.vk?.groups?.auto || '';
+                document.getElementById('vk-group-realestate').value = config.vk?.groups?.real_estate_sale || '';
+                document.getElementById('vk-group-general').value = config.vk?.groups?.general || '';
+                
+                document.getElementById('tg-token').value = config.telegram?.bot_token || '';
+                document.getElementById('tg-channel-auto').value = config.telegram?.channels?.auto || '';
+                document.getElementById('tg-channel-realestate').value = config.telegram?.channels?.real_estate_sale || '';
+                
+                document.getElementById('proxies').value = (config.proxies || []).join('\n');
+                document.getElementById('stop-words').value = (config.stop_words || []).join('\n');
+                
+                renderSources();
+                loadStats();
+            } catch (e) {
+                showAlert('Ошибка загрузки конфига: ' + e.message, 'error');
+            }
+        }
+
+        // Обновить город
+        async function updateCity() {
+            const city = document.getElementById('city').value.trim();
+            if (!city) {
+                showAlert('Введи город!', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/config/city`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({city})
+                });
+                const data = await res.json();
+                
+                config.city = city;
+                config.sources = data.sources;
+                renderSources();
+                showAlert(`✅ Город "${city}" установлен! Сгенерировано ${data.sources.length} ссылок`, 'success');
+            } catch (e) {
+                showAlert('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        // Отрисовка ссылок
+        function renderSources() {
+            const container = document.getElementById('sources-list');
+            if (!config.sources || config.sources.length === 0) {
+                container.innerHTML = '<p style="color: #999;">Сначала выбери город</p>';
+                return;
+            }
+
+            container.innerHTML = config.sources.map((source, idx) => `
+                <div class="source-item ${source.enabled ? '' : 'disabled'}">
+                    <div>
+                        <div>${source.signature}</div>
+                        <div class="source-url">${source.url}</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" ${source.enabled ? 'checked' : ''} onchange="toggleSource(${idx})">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            `).join('');
+        }
+
+        // Переключить ссылку
+        function toggleSource(idx) {
+            config.sources[idx].enabled = !config.sources[idx].enabled;
+            renderSources();
+        }
+
+        // Сохранить ссылки
+        async function saveSources() {
+            try {
+                await fetch(`${API_URL}/config/sources`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({sources: config.sources})
+                });
+                showAlert('✅ Ссылки сохранены', 'success');
+            } catch (e) {
+                showAlert('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        // Сохранить VK
+        async function saveVK() {
+            try {
+                await fetch(`${API_URL}/config/vk`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        access_token: document.getElementById('vk-token').value,
+                        groups: {
+                            auto: document.getElementById('vk-group-auto').value,
+                            real_estate_sale: document.getElementById('vk-group-realestate').value,
+                            general: document.getElementById('vk-group-general').value,
+                        }
+                    })
+                });
+                showAlert('✅ VK настройки сохранены', 'success');
+            } catch (e) {
+                showAlert('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        // Сохранить Telegram
+        async function saveTelegram() {
+            try {
+                await fetch(`${API_URL}/config/telegram`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        bot_token: document.getElementById('tg-token').value,
+                        channels: {
+                            auto: document.getElementById('tg-channel-auto').value,
+                            real_estate_sale: document.getElementById('tg-channel-realestate').value,
+                        }
+                    })
+                });
+                showAlert('✅ Telegram настройки сохранены', 'success');
+            } catch (e) {
+                showAlert('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        // Сохранить прокси
+        async function saveProxies() {
+            const proxies = document.getElementById('proxies').value.split('\n').filter(p => p.trim());
+            try {
+                await fetch(`${API_URL}/config/proxies`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({proxies})
+                });
+                showAlert(`✅ Прокси сохранены (${proxies.length} шт.)`, 'success');
+            } catch (e) {
+                showAlert('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        // Сохранить стоп-слова
+        async function saveStopWords() {
+            const stopWords = document.getElementById('stop-words').value.split('\n').filter(w => w.trim());
+            try {
+                await fetch(`${API_URL}/config/stop-words`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({stop_words: stopWords})
+                });
+                showAlert(`✅ Стоп-слова сохранены (${stopWords.length} шт.)`, 'success');
+            } catch (e) {
+                showAlert('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        // Загрузить статистику
+        async function loadStats() {
+            try {
+                const res = await fetch(`${API_URL}/stats`);
+                const stats = await res.json();
+                
+                document.getElementById('stat-total').textContent = stats.total;
+                document.getElementById('stat-new').textContent = stats.new;
+                document.getElementById('stat-published').textContent = stats.published;
+            } catch (e) {
+                console.error('Ошибка загрузки статистики:', e);
+            }
+        }
+
+        // Показать уведомление
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alert.style.display = 'block';
+            
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+
+        // Загрузка при старте
+        loadConfig();
+        setInterval(loadStats, 10000); // Обновляем статистику каждые 10 сек
+    </script>
+</body>
+</html>

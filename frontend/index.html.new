@@ -1,0 +1,30 @@
+        // Наполнить группы
+        async function fillGroups(days) {
+            if (!confirm(`Запустить наполнение групп за ${days} дней?\nЭто может занять 5-20 минут.`)) {
+                return;
+            }
+
+            try {
+                showAlert(`🔄 Запущено наполнение за ${days} дней... Это займёт время, следи за логами парсера.`, 'success');
+                
+                const res = await fetch(`${API_URL}/fill-groups`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({days})
+                });
+                
+                const data = await res.json();
+                showAlert(`✅ ${data.message}. Проверь логи парсера: tail -f logs/parser.log`, 'success');
+                
+                // Обновляем статистику каждые 5 сек
+                const interval = setInterval(() => {
+                    loadStats();
+                }, 5000);
+                
+                // Останавливаем через 10 минут
+                setTimeout(() => clearInterval(interval), 600000);
+                
+            } catch (e) {
+                showAlert('Ошибка: ' + e.message, 'error');
+            }
+        }

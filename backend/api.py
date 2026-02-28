@@ -9,6 +9,10 @@ from pathlib import Path
 from database import db
 from models import Announcement, Log
 from sqlalchemy import func
+from parser import AvitoParser
+from publisher import VKPublisher
+from telegram_publisher import TelegramPublisher
+import threading
 
 app = Flask(__name__, static_folder='../frontend/dist')
 CORS(app)
@@ -296,3 +300,100 @@ if __name__ == '__main__':
     
     print("🚀 Dashboard запущен: http://localhost:5000")
     app.run(host='0.0.0.0', port=5000, debug=True)
+
+
+@app.route('/api/fill-groups', methods=['POST'])
+def fill_groups():
+    """Наполнить группы за N дней"""
+    data = request.json
+    days = data.get('days', 1)  # 1, 3 или 5 дней
+    
+    if days not in [1, 3, 5]:
+        return jsonify({'error': 'days должен быть 1, 3 или 5'}), 400
+    
+    config = load_config()
+    
+    if not config.get('city') or not config.get('sources'):
+        return jsonify({'error': 'Сначала настрой город и ссылки'}), 400
+    
+    # Запускаем в фоне
+    def fill_job():
+        logger.info(f"🔄 Запуск наполнения групп за {days} дней")
+        
+        try:
+            parser = AvitoParser(config)
+            
+            total_found = 0
+            
+            # Парсим каждую активную ссылку
+            for source in config['sources']:
+                if not source.get('enabled', True):
+                    continue
+                
+                logger.info(f"🔍 Парсинг: {source['url']}")
+                
+                # Парсим больше страниц для наполнения
+                max_pages = days * 3  # 1 день = 3 страницы, 3 дня = 9 страниц и т.д.
+                raw_announcements = parser.parse_listing_page(source['url'], max_pages)
+                
+                if not raw_announcements:
+                    continue
+                
+                # Фильтрация
+                stop_words = config.get('stop_words', [])
+                filtered = parser.filter_announcements(raw_announcements, stop_words)
+                
+                # Сохранение
+                category = source.get('category', 'general')
+                stats = parser.save_to_db(filtered, category)
+                
+                total_found += stats['new']
+                logger.info(f"📊 Найдено новых: {stats['new']}")
+            
+            # Публикация
+            signatures = {}
+            for source in config['sources']:
+                category = source.get('category', 'general')
+                signature = source.get('signature', '')
+                signatures[category] = signature
+            
+            # VK
+            if config.get('vk', {}).get('access_token'):
+                vk_pub = VKPublisher(
+                    access_token=config['vk']['access_token'],
+                    group_mappings=config['vk']['groups']
+                )
+                vk_stats = vk_pub.publish_announcements(signatures)
+                logger.info(f"📊 VK публикация: {vk_stats}")
+            
+            # Telegram
+            if config.get('telegram', {}).get('bot_token'):
+                tg_pub = TelegramPublisher(
+                    bot_token=config['telegram']['bot_token'],
+                    channel_mappings=config['telegram']['channels']
+                )
+                tg_stats = tg_pub.publish_announcements(signatures)
+                logger.info(f"📊 TG публикация: {tg_stats}")
+            
+            logger.success(f"✅ Наполнение завершено! Найдено {total_found} новых объявлений")
+            
+        except Exception as e:
+            logger.error(f"❌ Ошибка наполнения: {e}", exc_info=True)
+    
+    thread = threading.Thread(target=fill_job, daemon=True)
+    thread.start()
+    
+    return jsonify({
+        'message': f'Запущено наполнение групп за {days} дней',
+        'status': 'running'
+    })
+
+
+@app.route('/api/parser/status', methods=['GET'])
+def parser_status():
+    """Статус парсера (работает ли)"""
+    # TODO: Добавить реальную проверку через PID файл или systemd
+    return jsonify({
+        'status': 'unknown',
+        'message': 'Запусти парсер через: bash start-parser.sh'
+    })

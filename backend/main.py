@@ -11,6 +11,7 @@ from pathlib import Path
 from database import db
 from parser import AvitoParser
 from publisher import VKPublisher
+from telegram_publisher import TelegramPublisher
 
 
 class AvitoParserApp:
@@ -26,10 +27,26 @@ class AvitoParserApp:
         
         # Инициализация компонентов
         self.parser = AvitoParser(self.config)
-        self.publisher = VKPublisher(
-            access_token=self.config['vk']['access_token'],
-            group_mappings=self.config['vk']['groups']
-        )
+        
+        # VK Publisher
+        if self.config.get('vk', {}).get('access_token'):
+            self.vk_publisher = VKPublisher(
+                access_token=self.config['vk']['access_token'],
+                group_mappings=self.config['vk']['groups']
+            )
+        else:
+            self.vk_publisher = None
+            logger.warning("VK токен не настроен, публикация в VK отключена")
+        
+        # Telegram Publisher
+        if self.config.get('telegram', {}).get('bot_token'):
+            self.tg_publisher = TelegramPublisher(
+                bot_token=self.config['telegram']['bot_token'],
+                channel_mappings=self.config['telegram']['channels']
+            )
+        else:
+            self.tg_publisher = None
+            logger.warning("Telegram бот не настроен, публикация в TG отключена")
         
         logger.info("✅ Приложение инициализировано")
     
@@ -108,9 +125,6 @@ class AvitoParserApp:
                 
                 logger.info(f"📊 Статистика: {stats}")
             
-            # Публикация в VK
-            logger.info("📤 Публикация в VK...")
-            
             # Собираем подписи для категорий
             signatures = {}
             for source in self.config['sources']:
@@ -118,8 +132,17 @@ class AvitoParserApp:
                 signature = source.get('signature', '')
                 signatures[category] = signature
             
-            publish_stats = self.publisher.publish_announcements(signatures)
-            logger.info(f"📊 Публикация: {publish_stats}")
+            # Публикация в VK
+            if self.vk_publisher:
+                logger.info("📤 Публикация в VK...")
+                vk_stats = self.vk_publisher.publish_announcements(signatures)
+                logger.info(f"📊 VK: {vk_stats}")
+            
+            # Публикация в Telegram
+            if self.tg_publisher:
+                logger.info("📤 Публикация в Telegram...")
+                tg_stats = self.tg_publisher.publish_announcements(signatures)
+                logger.info(f"📊 Telegram: {tg_stats}")
             
             logger.success("✅ Цикл завершён успешно")
             
