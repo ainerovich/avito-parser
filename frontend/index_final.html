@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Авито Парсер v2</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        
+        header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px 0; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        header .container { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        h1 { font-size: 1.8rem; font-weight: 700; }
+        
+        .nav-tabs { display: flex; gap: 10px; }
+        .nav-tabs button { background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+        .nav-tabs button.active { background: white; color: #667eea; }
+        .nav-tabs button:hover { background: rgba(255,255,255,0.3); }
+        
+        .page { display: none; }
+        .page.active { display: block; }
+        
+        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card h2 { font-size: 1.2rem; margin-bottom: 15px; color: #667eea; }
+        
+        .city-card { background: white; border: 2px solid #e0e0e0; border-radius: 12px; padding: 20px; margin-bottom: 20px; transition: all 0.3s; }
+        .city-card.disabled { background: #f0f0f0; opacity: 0.6; }
+        .city-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+        
+        .city-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .city-name { font-size: 1.3rem; font-weight: 700; }
+        .city-status { padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; }
+        .status-on { background: #d4edda; color: #155724; }
+        .status-off { background: #f8d7da; color: #721c24; }
+        
+        .city-meta { display: flex; gap: 15px; margin-bottom: 15px; font-size: 0.9rem; }
+        .meta-item { display: flex; align-items: center; gap: 5px; }
+        
+        .sources-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        .source-badge { background: #f0f0f0; padding: 8px 12px; border-radius: 8px; text-align: center; font-size: 0.9rem; display: flex; align-items: center; justify-content: space-between; gap: 5px; }
+        .source-badge.on { background: #d4edda; color: #155724; }
+        .source-badge.off { background: #f8d7da; color: #721c24; }
+        .source-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .source-dot.on { background: #10b981; }
+        .source-dot.off { background: #ef4444; }
+        
+        .city-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        
+        button { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+        
+        .btn-fill { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .btn-fill:hover { box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); }
+        .btn-danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+        .btn-danger:hover { box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4); }
+        .btn-small { padding: 8px 12px; font-size: 0.9rem; }
+        
+        .stat-card { background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .stat-value { font-size: 2rem; font-weight: 700; color: #667eea; }
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+        
+        input, textarea { width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-family: monospace; margin-bottom: 10px; }
+        input:focus, textarea:focus { outline: none; border-color: #667eea; }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; color: #555; }
+        
+        .hint { font-size: 0.85rem; color: #666; margin-top: 4px; }
+        
+        .alert { padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-error { background: #f8d7da; color: #721c24; }
+        
+        .toggle-switch { display: flex; align-items: center; gap: 8px; }
+        .toggle-switch input { width: 40px; height: 24px; accent-color: #667eea; cursor: pointer; }
+        
+        .add-city { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .add-city input { margin: 0; }
+        
+        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .settings-grid textarea { min-height: 150px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container" style="width: 100%;">
+            <h1>🔍 Авито Парсер v2</h1>
+            <div class="nav-tabs">
+                <button class="nav-btn active" onclick="switchPage('cities')">🌍 Города</button>
+                <button class="nav-btn" onclick="switchPage('settings')">⚙️ Настройки</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="alert" style="display: none;"></div>
+
+        <!-- СТРАНИЦА: ГОРОДА -->
+        <div id="cities" class="page active">
+            <!-- Статистика -->
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-total">0</div>
+                    <div>Всего</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-new">0</div>
+                    <div>Новые</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-published">0</div>
+                    <div>Опубликовано</div>
+                </div>
+            </div>
+
+            <!-- Добавить город -->
+            <div class="card">
+                <h2>➕ Добавить город</h2>
+                <div class="add-city">
+                    <input type="text" id="new-city-name" placeholder="Название (Воркута)">
+                    <input type="text" id="new-city-slug" placeholder="Слаг (vorkuta)">
+                    <button onclick="addCity()" style="margin-bottom: 0;">Добавить</button>
+                </div>
+            </div>
+
+            <!-- Города -->
+            <div id="cities-list"></div>
+        </div>
+
+        <!-- СТРАНИЦА: НАСТРОЙКИ -->
+        <div id="settings" class="page">
+            <div class="settings-grid">
+                <!-- VK -->
+                <div class="card">
+                    <h2>📱 VK</h2>
+                    <div class="form-group">
+                        <label>Access Token</label>
+                        <input type="password" id="vk-token" placeholder="vk1.a...">
+                        <div class="hint">Получить: https://vkhost.github.io/ (права: wall, photos, groups, offline)</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>🚗 ID Группы "Авто"</label>
+                        <input type="text" id="vk-auto" placeholder="-123456789">
+                        <div class="hint">Открой группу в VK: vk.com/club123456789 → ID = -123456789</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>🏠 ID Группы "Недвижимость продажа"</label>
+                        <input type="text" id="vk-real-sale" placeholder="-123456789">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>🏠 ID Группы "Недвижимость аренда"</label>
+                        <input type="text" id="vk-real-rent" placeholder="-123456789">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>⚽ ID Группы "Спорт"</label>
+                        <input type="text" id="vk-sport" placeholder="-123456789">
+                    </div>
+
+                    <button onclick="saveVK()" style="width: 100%;">💾 Сохранить VK</button>
+                </div>
+
+                <!-- Telegram -->
+                <div class="card">
+                    <h2>💬 Telegram</h2>
+                    <div class="form-group">
+                        <label>Bot Token</label>
+                        <input type="password" id="tg-token" placeholder="123456:ABCdefXYZ...">
+                        <div class="hint">Получить у @BotFather</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>🚗 ID Канала "Авто"</label>
+                        <input type="text" id="tg-auto" placeholder="@avto_vorkuta или -1001234567890">
+                        <div class="hint">@username или числовой ID (-100...)</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>🏠 ID Канала "Недвижимость продажа"</label>
+                        <input type="text" id="tg-real-sale" placeholder="@realty">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>🏠 ID Канала "Недвижимость аренда"</label>
+                        <input type="text" id="tg-real-rent" placeholder="@rent">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>⚽ ID Канала "Спорт"</label>
+                        <input type="text" id="tg-sport" placeholder="@sport">
+                    </div>
+
+                    <button onclick="saveTelegram()" style="width: 100%;">💾 Сохранить Telegram</button>
+                </div>
+            </div>
+
+            <div class="settings-grid">
+                <!-- Прокси -->
+                <div class="card">
+                    <h2>🔗 Прокси (для всех городов)</h2>
+                    <label>По одному на строку</label>
+                    <textarea id="proxies" placeholder="http://ip:port&#10;http://user:pass@ip:port&#10;socks5://ip:port"></textarea>
+                    <div class="hint">Форматы: http://ip:port, http://user:pass@ip:port, socks5://ip:port</div>
+                    <button onclick="saveProxies()" style="width: 100%;">💾 Сохранить</button>
+                </div>
+
+                <!-- Стоп-слова -->
+                <div class="card">
+                    <h2>🚫 Стоп-слова (для всех городов)</h2>
+                    <label>По одному на строку</label>
+                    <textarea id="stop-words" placeholder="рассрочка&#10;кредит&#10;франшиза&#10;автосалон"></textarea>
+                    <div class="hint">Объявления с этими словами будут пропущены</div>
+                    <button onclick="saveStopWords()" style="width: 100%;">💾 Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://151.247.209.203:5000/api';
+        let config = {};
+
+        function switchPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(page).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        async function loadConfig() {
+            try {
+                const res = await fetch(`${API_URL}/config`);
+                config = await res.json();
+                
+                // VK
+                document.getElementById('vk-token').value = config.vk?.access_token || '';
+                document.getElementById('vk-auto').value = config.vk?.groups?.auto || '';
+                document.getElementById('vk-real-sale').value = config.vk?.groups?.real_estate_sale || '';
+                document.getElementById('vk-real-rent').value = config.vk?.groups?.real_estate_rent || '';
+                document.getElementById('vk-sport').value = config.vk?.groups?.sport || '';
+                
+                // TG
+                document.getElementById('tg-token').value = config.telegram?.bot_token || '';
+                document.getElementById('tg-auto').value = config.telegram?.channels?.auto || '';
+                document.getElementById('tg-real-sale').value = config.telegram?.channels?.real_estate_sale || '';
+                document.getElementById('tg-real-rent').value = config.telegram?.channels?.real_estate_rent || '';
+                document.getElementById('tg-sport').value = config.telegram?.channels?.sport || '';
+                
+                // Прокси и стоп-слова
+                document.getElementById('proxies').value = (config.proxies || []).join('\n');
+                document.getElementById('stop-words').value = (config.stop_words || []).join('\n');
+                
+                renderCities();
+                loadStats();
+            } catch (e) {
+                showAlert('Ошибка загрузки: ' + e.message, 'error');
+            }
+        }
+
+        function renderCities() {
+            const container = document.getElementById('cities-list');
+            const cities = config.cities || [];
+            
+            if (!cities.length) {
+                container.innerHTML = '<div class="card"><p style="color: #999;">Города не добавлены. Добавь первый выше!</p></div>';
+                return;
+            }
+
+            container.innerHTML = cities.map(city => {
+                const enabledSources = city.sources?.filter(s => s.enabled).length || 0;
+                const totalSources = city.sources?.length || 0;
+                
+                return `
+                    <div class="city-card ${city.enabled ? '' : 'disabled'}">
+                        <div class="city-header">
+                            <div>
+                                <div class="city-name">${city.name}</div>
+                                <div class="city-meta">
+                                    <div class="meta-item">
+                                        <span class="city-status ${city.enabled ? 'status-on' : 'status-off'}">
+                                            ${city.enabled ? '✅ Включен' : '❌ Отключен'}
+                                        </span>
+                                    </div>
+                                    <div class="meta-item">📍 ${city.url_slug}</div>
+                                    <div class="meta-item">🔗 ${enabledSources}/${totalSources} ссылок</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" ${city.enabled ? 'checked' : ''} onchange="toggleCity('${city.url_slug}')">
+                                </label>
+                                <button class="btn-small btn-danger" onclick="deleteCity('${city.url_slug}')">🗑️</button>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <div style="font-weight: 600; margin-bottom: 8px;">Включенные ссылки:</div>
+                            <div class="sources-grid">
+                                ${city.sources?.map((src, idx) => `
+                                    <div class="source-badge ${src.enabled ? 'on' : 'off'}" title="${src.category}">
+                                        <span class="source-dot ${src.enabled ? 'on' : 'off'}"></span>
+                                        <span>${src.category}</span>
+                                        <input type="checkbox" ${src.enabled ? 'checked' : ''} 
+                                            onchange="toggleSource('${city.url_slug}', ${idx})"
+                                            style="width: 16px; height: 16px; cursor: pointer; accent-color: #667eea; margin: 0;">
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <button class="btn-small" onclick="saveCitySources('${city.url_slug}')" style="margin-top: 8px;">💾 Сохранить ссылки</button>
+                        </div>
+
+                        <div class="city-actions">
+                            <button class="btn-fill" onclick="fillCity('${city.url_slug}', 1)">📅 День</button>
+                            <button class="btn-fill" onclick="fillCity('${city.url_slug}', 3)">📆 3 дня</button>
+                            <button class="btn-fill" onclick="fillCity('${city.url_slug}', 5)">📊 5 дней</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function addCity() {
+            const name = document.getElementById('new-city-name').value.trim();
+            const slug = document.getElementById('new-city-slug').value.trim().toLowerCase();
+            
+            if (!name || !slug) {
+                showAlert('Заполни название и слаг!', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/cities`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name, url_slug: slug})
+                });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    document.getElementById('new-city-name').value = '';
+                    document.getElementById('new-city-slug').value = '';
+                    await loadConfig();
+                    showAlert(`✅ ${data.message}`, 'success');
+                } else {
+                    showAlert(data.error, 'error');
+                }
+            } catch (e) {
+                showAlert('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        function toggleCity(slug) {
+            config.cities.forEach(city => {
+                if (city.url_slug === slug) city.enabled = !city.enabled;
+            });
+            renderCities();
+        }
+
+        function toggleSource(slug, idx) {
+            config.cities.forEach(city => {
+                if (city.url_slug === slug && city.sources[idx]) {
+                    city.sources[idx].enabled = !city.sources[idx].enabled;
+                }
+            });
+            renderCities();
+        }
+
+        async function saveCitySources(slug) {
+            const city = config.cities.find(c => c.url_slug === slug);
+            if (!city) return;
+
+            try {
+                await fetch(`${API_URL}/cities/${slug}/sources`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({sources: city.sources})
+                });
+                showAlert('✅ Ссылки сохранены', 'success');
+            } catch (e) {
+                showAlert('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        async function deleteCity(slug) {
+            if (!confirm('Удалить город?')) return;
+
+            try {
+                await fetch(`${API_URL}/cities/${slug}`, {method: 'DELETE'});
+                await loadConfig();
+                showAlert('✅ Город удален', 'success');
+            } catch (e) {
+                showAlert('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        async function fillCity(slug, days) {
+            if (!confirm(`Наполнить город за ${days} дней?`)) return;
+            
+            try {
+                showAlert(`🔄 Запущено для ${slug}...`, 'success');
+                await fetch(`${API_URL}/fill-groups`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({days, city: slug})
+                });
+                setInterval(loadStats, 5000);
+            } catch (e) {
+                showAlert('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        async function saveVK() {
+            try {
+                await fetch(`${API_URL}/tokens/vk`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        access_token: document.getElementById('vk-token').value,
+                        groups: {
+                            auto: document.getElementById('vk-auto').value,
+                            real_estate_sale: document.getElementById('vk-real-sale').value,
+                            real_estate_rent: document.getElementById('vk-real-rent').value,
+                            sport: document.getElementById('vk-sport').value,
+                        }
+                    })
+                });
+                showAlert('✅ VK сохранён', 'success');
+            } catch (e) {
+                showAlert('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        async function saveTelegram() {
+            try {
+                await fetch(`${API_URL}/tokens/telegram`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        bot_token: document.getElementById('tg-token').value,
+                        channels: {
+                            auto: document.getElementById('tg-auto').value,
+                            real_estate_sale: document.getElementById('tg-real-sale').value,
+                            real_estate_rent: document.getElementById('tg-real-rent').value,
+                            sport: document.getElementById('tg-sport').value,
+                        }
+                    })
+                });
+                showAlert('✅ Telegram сохранён', 'success');
+            } catch (e) {
+                showAlert('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        async function saveProxies() {
+            const proxies = document.getElementById('proxies').value.split('\n').filter(p => p.trim());
+            try {
+                await fetch(`${API_URL}/proxies`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({proxies})
+                });
+                showAlert(`✅ Прокси: ${proxies.length} шт.`, 'success');
+            } catch (e) {
+                showAlert('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        async function saveStopWords() {
+            const words = document.getElementById('stop-words').value.split('\n').filter(w => w.trim());
+            try {
+                await fetch(`${API_URL}/stop-words`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({stop_words: words})
+                });
+                showAlert(`✅ Стоп-слова: ${words.length} шт.`, 'success');
+            } catch (e) {
+                showAlert('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const res = await fetch(`${API_URL}/stats`);
+                const stats = await res.json();
+                document.getElementById('stat-total').textContent = stats.total;
+                document.getElementById('stat-new').textContent = stats.new;
+                document.getElementById('stat-published').textContent = stats.published;
+            } catch (e) {
+                console.error('Ошибка:', e);
+            }
+        }
+
+        function showAlert(msg, type) {
+            const alert = document.getElementById('alert');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = msg;
+            alert.style.display = 'block';
+            setTimeout(() => { alert.style.display = 'none'; }, 4000);
+        }
+
+        loadConfig();
+        setInterval(loadStats, 10000);
+    </script>
+</body>
+</html>
