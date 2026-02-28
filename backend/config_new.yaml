@@ -1,0 +1,131 @@
+# Авито Парсер - Новая структура конфига
+
+# ===== ГЛОБАЛЬНЫЕ ТОКЕНЫ =====
+vk:
+  access_token: ""  # Один токен для всех групп
+  groups:
+    auto: ""                  # ID группы авто
+    real_estate_sale: ""      # ID группы недвижимость продажа
+    real_estate_rent: ""      # ID группы недвижимость аренда
+    sport: ""
+    home: ""
+    electronics: ""
+    tech: ""
+
+telegram:
+  bot_token: ""  # Один токен для всех каналов
+  channels:
+    auto: ""
+    real_estate_sale: ""
+    real_estate_rent: ""
+    sport: ""
+    home: ""
+    electronics: ""
+    tech: ""
+
+# ===== ГЛОБАЛЬНЫЕ ПРОКСИ (используются для всех городов) =====
+proxies: []
+#  - "http://ip:port"
+#  - "http://user:pass@ip:port"
+
+# ===== СТОП-СЛОВА (общие для всех) =====
+stop_words:
+  - "автосалон"
+  - "кредит"
+  - "рассрочка"
+  - "trade-in"
+  - "франшиза"
+  - "официальный"
+  - "автоцентр"
+
+# ===== ГОРОДА (каждый город может быть включен/отключен) =====
+cities:
+  # Город 1
+  - name: "Воркута"            # Русское название для отображения
+    url_slug: "vorkuta"        # URL-слаг Авито (латиница)
+    enabled: true              # Включен/отключен
+    sources:                   # Пулы ссылок для этого города
+      - category: "auto"
+        url_path: "avtomobili"
+        enabled: true
+        signature: "🚗 Авто Воркута | Свежие объявления"
+      
+      - category: "real_estate_sale"
+        url_path: "kvartiry"
+        enabled: true
+        signature: "🏠 Недвижимость Воркута | Продажа"
+      
+      - category: "real_estate_rent"
+        url_path: "kvartiry/sdam"
+        enabled: true
+        signature: "🏠 Недвижимость Воркута | Аренда"
+      
+      - category: "sport"
+        url_path: "tovary_dlya_sporta_i_otdyha"
+        enabled: false
+        signature: "⚽ Спорт Воркута"
+      
+      - category: "home"
+        url_path: "tovary_dlya_doma_i_dachi"
+        enabled: false
+        signature: "🏡 Товары для дома"
+
+  # Город 2
+  - name: "Москва"
+    url_slug: "moskva"
+    enabled: false
+    sources:
+      - category: "auto"
+        url_path: "avtomobili"
+        enabled: true
+        signature: "🚗 Авто Москва | Топ объявлений"
+      
+      - category: "real_estate_sale"
+        url_path: "kvartiry"
+        enabled: true
+        signature: "🏠 Квартиры Москва | Продажа"
+      
+      - category: "real_estate_rent"
+        url_path: "kvartiry/sdam"
+        enabled: false
+        signature: "🏠 Аренда Москва"
+      
+      - category: "electronics"
+        url_path: "elektronika"
+        enabled: true
+        signature: "💻 Электроника Москва"
+
+  # Город 3
+  - name: "Санкт-Петербург"
+    url_slug: "sankt-peterburg"
+    enabled: false
+    sources:
+      - category: "auto"
+        url_path: "avtomobili"
+        enabled: true
+        signature: "🚗 Авто СПб"
+      
+      - category: "real_estate_sale"
+        url_path: "kvartiry"
+        enabled: true
+        signature: "🏠 Квартиры СПб"
+
+# ===== ПАРСЕР НАСТРОЙКИ =====
+parser:
+  interval: 300              # Интервал между циклами (секунды)
+  max_pages: 3               # Страниц за один цикл
+  timeout: 30                # Таймаут загрузки (сек)
+  headless: true             # Браузер в фоне (будущее)
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+  delay_between_requests: 2  # Задержка между запросами (сек)
+
+# ===== БАЗА ДАННЫХ =====
+database:
+  path: "data/avito_parser.db"
+
+# ===== ЛОГИРОВАНИЕ =====
+logging:
+  level: "INFO"
+  file: "logs/parser.log"
+  max_size: "10 MB"
+  backup_count: 5
