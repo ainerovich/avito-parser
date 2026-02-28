@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Авито Парсер</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        
+        header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px 0; margin-bottom: 30px; }
+        h1 { font-size: 1.8rem; font-weight: 700; }
+        
+        .nav-tabs { display: flex; gap: 10px; margin-top: 15px; }
+        .nav-tabs button { background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .nav-tabs button.active { background: white; color: #667eea; }
+        
+        .page { display: none; }
+        .page.active { display: block; }
+        
+        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card h2 { font-size: 1.2rem; margin-bottom: 15px; color: #667eea; }
+        
+        .unit-card { background: white; border: 2px solid #e0e0e0; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .unit-card.disabled { opacity: 0.5; background: #f0f0f0; }
+        
+        .unit-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .unit-name { font-size: 1.3rem; font-weight: 700; }
+        .unit-meta { display: flex; gap: 15px; margin-bottom: 15px; font-size: 0.9rem; color: #666; }
+        
+        .sources-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        .source-badge { background: #f0f0f0; padding: 8px 12px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; }
+        .source-badge.on { background: #d4edda; color: #155724; }
+        .source-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; }
+        .source-dot.on { background: #10b981; }
+        
+        button { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+        
+        .btn-small { padding: 8px 12px; font-size: 0.9rem; }
+        .btn-fill { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .btn-danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+        
+        input, textarea { width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; margin-bottom: 10px; }
+        input:focus, textarea:focus { outline: none; border-color: #667eea; }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; color: #555; }
+        
+        .alert { padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-error { background: #f8d7da; color: #721c24; }
+        
+        .toggle-switch input { width: 40px; height: 24px; accent-color: #667eea; cursor: pointer; }
+        
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .stat-value { font-size: 2rem; font-weight: 700; color: #667eea; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🔍 Авито Парсер</h1>
+            <div class="nav-tabs">
+                <button class="nav-btn active" onclick="switchPage('units')">📦 Единицы</button>
+                <button class="nav-btn" onclick="switchPage('settings')">⚙️ Настройки</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="alert" style="display: none;"></div>
+
+        <!-- СТРАНИЦА: ЕДИНИЦЫ -->
+        <div id="units" class="page active">
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-total">0</div>
+                    <div>Всего</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-new">0</div>
+                    <div>Новые</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-published">0</div>
+                    <div>Опубликовано</div>
+                </div>
+            </div>
+
+            <!-- Создать единицу -->
+            <div class="card">
+                <h2>➕ Создать единицу</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <input type="text" id="new-name" placeholder="Название (Воркута Авто)">
+                        <input type="text" id="new-slug" placeholder="Город (vorkuta)">
+                    </div>
+                    <div>
+                        <input type="text" id="new-vk" placeholder="VK группа (-123456789)">
+                        <input type="text" id="new-tg" placeholder="Telegram (@channel)">
+                    </div>
+                </div>
+                <button onclick="createUnit()" style="width: 100%; margin-top: 10px;">Создать</button>
+            </div>
+
+            <!-- Список единиц -->
+            <div id="units-list"></div>
+        </div>
+
+        <!-- СТРАНИЦА: НАСТРОЙКИ -->
+        <div id="settings" class="page">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="card">
+                    <h2>📱 VK Токены</h2>
+                    <input type="password" id="vk-token" placeholder="vk1.a...">
+                    <button onclick="saveVK()" style="width: 100%;">💾 Сохранить</button>
+                </div>
+
+                <div class="card">
+                    <h2>💬 Telegram Токены</h2>
+                    <input type="password" id="tg-token" placeholder="123:ABC...">
+                    <button onclick="saveTG()" style="width: 100%;">💾 Сохранить</button>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="card">
+                    <h2>🔗 Прокси</h2>
+                    <textarea id="proxies" placeholder="http://ip:port" style="height: 150px;"></textarea>
+                    <button onclick="saveProxies()" style="width: 100%;">💾 Сохранить</button>
+                </div>
+
+                <div class="card">
+                    <h2>🚫 Стоп-слова</h2>
+                    <textarea id="stop-words" placeholder="рассрочка" style="height: 150px;"></textarea>
+                    <button onclick="saveStopWords()" style="width: 100%;">💾 Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api';
+        let units = [];
+
+        function switchPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(page).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        async function loadUnits() {
+            try {
+                const res = await fetch(`${API_URL}/units`);
+                if (!res.ok) throw new Error('Failed to load');
+                units = await res.json();
+                renderUnits();
+            } catch (e) {
+                units = []; // Пустой массив если API не готов
+                renderUnits();
+            }
+        }
+
+        function renderUnits() {
+            const container = document.getElementById('units-list');
+            
+            if (!units.length) {
+                container.innerHTML = '<div class="card"><p style="color: #999;">Единицы не созданы. Создай первую выше!</p></div>';
+                return;
+            }
+
+            container.innerHTML = units.map(unit => `
+                <div class="unit-card ${unit.is_enabled ? '' : 'disabled'}">
+                    <div class="unit-header">
+                        <div class="unit-name">${unit.name}</div>
+                        <div style="display: flex; gap: 10px;">
+                            <label class="toggle-switch">
+                                <input type="checkbox" ${unit.is_enabled ? 'checked' : ''} onchange="toggleUnit(${unit.id})">
+                            </label>
+                            <button class="btn-small btn-danger" onclick="deleteUnit(${unit.id})">🗑️</button>
+                        </div>
+                    </div>
+
+                    <div class="unit-meta">
+                        <div>📍 ${unit.city_slug}</div>
+                        <div>📱 VK: ${unit.vk_group_id || '—'}</div>
+                        <div>💬 TG: ${unit.telegram_channel_id || '—'}</div>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <div style="font-weight: 600; margin-bottom: 8px;">Ссылки:</div>
+                        <div class="sources-grid">
+                            ${(unit.sources || []).map((src, idx) => `
+                                <div class="source-badge ${src.is_enabled ? 'on' : ''}">
+                                    <span class="source-dot ${src.is_enabled ? 'on' : ''}"></span>
+                                    <span>${src.category}</span>
+                                    <input type="checkbox" ${src.is_enabled ? 'checked' : ''} 
+                                        onchange="toggleSource(${unit.id}, ${idx})"
+                                        style="width: 16px; height: 16px; cursor: pointer; margin: 0;">
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button class="btn-small" onclick="saveSources(${unit.id})">💾 Сохранить ссылки</button>
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-fill btn-small" onclick="fillUnit(${unit.id}, 1)">📅 День</button>
+                        <button class="btn-fill btn-small" onclick="fillUnit(${unit.id}, 3)">📆 3 дня</button>
+                        <button class="btn-fill btn-small" onclick="fillUnit(${unit.id}, 5)">📊 5 дней</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function createUnit() {
+            const name = document.getElementById('new-name').value.trim();
+            const slug = document.getElementById('new-slug').value.trim().toLowerCase();
+            const vk = document.getElementById('new-vk').value.trim();
+            const tg = document.getElementById('new-tg').value.trim();
+
+            if (!name || !slug) {
+                showAlert('Заполни название и город!', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/units`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name, city_slug: slug, vk_group_id: vk, telegram_channel_id: tg})
+                });
+
+                if (res.ok) {
+                    document.getElementById('new-name').value = '';
+                    document.getElementById('new-slug').value = '';
+                    document.getElementById('new-vk').value = '';
+                    document.getElementById('new-tg').value = '';
+                    await loadUnits();
+                    showAlert('✅ Единица создана!', 'success');
+                } else {
+                    showAlert('Ошибка создания', 'error');
+                }
+            } catch (e) {
+                showAlert('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        function toggleUnit(id) {
+            units.forEach(u => { if (u.id === id) u.is_enabled = !u.is_enabled; });
+            renderUnits();
+        }
+
+        function toggleSource(unitId, idx) {
+            units.forEach(u => {
+                if (u.id === unitId && u.sources[idx]) {
+                    u.sources[idx].is_enabled = !u.sources[idx].is_enabled;
+                }
+            });
+            renderUnits();
+        }
+
+        async function saveSources(unitId) {
+            const unit = units.find(u => u.id === unitId);
+            if (!unit) return;
+
+            try {
+                await fetch(`${API_URL}/units/${unitId}/sources`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({sources: unit.sources})
+                });
+                showAlert('✅ Ссылки сохранены', 'success');
+            } catch (e) {
+                showAlert('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        async function deleteUnit(id) {
+            if (!confirm('Удалить единицу?')) return;
+
+            try {
+                await fetch(`${API_URL}/units/${id}`, {method: 'DELETE'});
+                await loadUnits();
+                showAlert('✅ Удалено', 'success');
+            } catch (e) {
+                showAlert('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        async function fillUnit(id, days) {
+            if (!confirm(`Наполнить за ${days} дней?`)) return;
+            
+            try {
+                showAlert(`🔄 Запущено...`, 'success');
+                await fetch(`${API_URL}/units/${id}/fill`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({days})
+                });
+            } catch (e) {
+                showAlert('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        async function saveVK() {
+            showAlert('✅ VK сохранён (функция в разработке)', 'success');
+        }
+
+        async function saveTG() {
+            showAlert('✅ TG сохранён (функция в разработке)', 'success');
+        }
+
+        async function saveProxies() {
+            showAlert('✅ Прокси сохранены (функция в разработке)', 'success');
+        }
+
+        async function saveStopWords() {
+            showAlert('✅ Стоп-слова сохранены (функция в разработке)', 'success');
+        }
+
+        function showAlert(msg, type) {
+            const alert = document.getElementById('alert');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = msg;
+            alert.style.display = 'block';
+            setTimeout(() => { alert.style.display = 'none'; }, 4000);
+        }
+
+        loadUnits();
+        setInterval(() => {
+            // Обновляем статистику (заглушка)
+            document.getElementById('stat-total').textContent = Math.floor(Math.random() * 1000);
+            document.getElementById('stat-new').textContent = Math.floor(Math.random() * 100);
+            document.getElementById('stat-published').textContent = Math.floor(Math.random() * 500);
+        }, 10000);
+    </script>
+</body>
+</html>
